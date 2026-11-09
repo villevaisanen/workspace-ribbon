@@ -1,3 +1,4 @@
 /build*/
 /research/
 *.so
+/.tools/
