@@ -1,0 +1,12 @@
+name: Animation model
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build -DRIBBON_BUILD_PLUGIN=OFF
+      - run: cmake --build build -j2
+      - run: ctest --test-dir build --output-on-failure

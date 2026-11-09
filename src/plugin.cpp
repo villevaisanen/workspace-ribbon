@@ -27,10 +27,11 @@ struct MonitorAnimation {
     bool running = false;
 };
 std::map<MONITORID, MonitorAnimation> monitors;
-void finish(MonitorAnimation& state) {
+void finish(MonitorAnimation& state, WORKSPACEID preserveA = 0, WORKSPACEID preserveB = 0) {
     for (auto& ws : state.cells) {
         if (!valid(ws)) continue;
         ws->m_forceRendering = false;
+        if (ws->m_id == preserveA || ws->m_id == preserveB) continue;
         ws->m_renderOffset->setValueAndWarp(Vector2D{});
         ws->m_alpha->setValueAndWarp(1.F);
     }
@@ -75,7 +76,7 @@ void changed(PHLWORKSPACE ws) {
     state.monitor = monitor; state.last = ws->m_id;
     const auto time = now();
     const auto origin = state.running ? state.animation.sample(time).position : double(previous)-1;
-    if (previous <= 0 || !eligible(monitor, origin, ws->m_id)) { finish(state); return; }
+    if (previous <= 0 || !eligible(monitor, origin, ws->m_id)) { finish(state,previous,ws->m_id); return; }
     if (!state.running) state.animation = ribbon::Animation(origin);
     ribbon::Options options;
     options.durationMs=duration->value(); options.maxDurationMs=maximum->value();
