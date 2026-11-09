@@ -2,10 +2,10 @@
 
 ## Verified locally
 
-- CMake Debug build against installed Hyprland 0.56.2 headers: passed.
+- CMake Debug and Release builds against installed Hyprland 0.56.2 headers: passed.
 - GCC 16.2.1 matches compositor binary compiler metadata.
 - Required plugin entry points exported in ELF shared object (nm -D).
-- CTest animation model: 1 executable passed. Checks forward/backward and
+- CTest animation model: 1 executable passed in both Debug and Release builds. Checks forward/backward and
   adjacent/distant targets, monotonic ease-out, exact endpoints, rapid retargets,
   interruption continuity, spring position/velocity continuity, distance scaling,
   maximum duration and independent animation instances.
