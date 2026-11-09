@@ -1,0 +1,9 @@
+[repository]
+name = "workspace-ribbon"
+authors = ["villevaisanen"]
+
+[workspace-ribbon]
+description = "Experimental continuous workspace ribbon for Hyprland 0.56.2"
+authors = ["villevaisanen"]
+output = "build/libworkspace-ribbon.so"
+build = ["cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF", "cmake --build build -j2"]
