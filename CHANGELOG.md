@@ -2,7 +2,7 @@
 
 ## 0.1.0-dev — Unreleased
 
-- Added configurable center zoom during workspace slides, with continuous zoom on retargeting.
+- Added configurable center zoom during workspace slides, with a short zoom lead on fresh transitions and immediate motion on retargeting.
 
 - Investigated Omarchy 4.0.6 and Hyprland 0.56.2 rendering architecture.
 - Added CMake native plugin target and hyprpm manifest without speculative pins.

@@ -107,9 +107,11 @@ hl.config({
 | easing | 1 | 0 linear, 1 cubic ease-out, 2 critically damped spring |
 | zoom_out_percent | 8 | Maximum zoom out, 0–25. At 8 the window ribbon reaches 92% scale. Set 0 for the original slide. |
 
-The ribbon scales around the output center, reaches its minimum halfway through
-a single slide, and returns to full size at the end. A new target starts from
-the current scale. Layer-shell bars, wallpaper and the cursor keep their size.
+At the start of a fresh transition, the ribbon zooms out around the output
+center for 15% of its configured duration, capped at 70 ms. Horizontal motion
+then starts, and the ribbon returns to full size in the latter part of the slide.
+A target change during the transition continues from the current scale and
+position without a new delay. Layer-shell bars, wallpaper and the cursor keep their size.
 Zoom uses an internal OpenGL texture draw hook for clipping. If that hook is
 unavailable, the original ribbon slide is used.
 

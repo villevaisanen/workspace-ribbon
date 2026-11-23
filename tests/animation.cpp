@@ -1,7 +1,13 @@
 #include <ribbon/Animation.hpp>
 #include <cstdlib>
 #include <iostream>
-void check(bool b) { if (!b) { std::cerr << "animation assertion failed\n"; std::exit(1); } }
+#include <source_location>
+void check(bool passed, std::source_location location = std::source_location::current()) {
+    if (!passed) {
+        std::cerr << "animation assertion failed at line " << location.line() << '\n';
+        std::exit(1);
+    }
+}
 bool close(double a,double b) { return std::abs(a-b)<1e-8; }
 int main() {
     using namespace ribbon;
@@ -28,10 +34,21 @@ int main() {
         Animation single(1);
         single.retarget(2, 0, zoom);
         check(close(single.sample(0).scale, 1));
-        check(close(single.sample(.1).scale, .96));
-        check(close(single.sample(.2).scale, .92));
-        check(close(single.sample(.3).scale, .96));
+        check(close(single.sample(.03).scale, .96));
+        check(close(single.sample(.03).position, 1));
+        check(close(single.sample(.06).scale, .92));
+        check(close(single.sample(.06).position, 1));
+        check(single.sample(.08).position > 1);
+        check(close(single.sample(.20).scale, .92));
+        check(single.sample(.33).scale > .92 && single.sample(.33).scale < 1);
         check(close(single.sample(.4).scale, 1));
+
+        Animation interrupted(0);
+        interrupted.retarget(4, 0, zoom);
+        const auto beforeMovement = interrupted.sample(.03);
+        interrupted.retarget(1, .03, zoom);
+        check(close(interrupted.sample(.03).scale, beforeMovement.scale));
+        check(interrupted.sample(.04).position > 0);
 
         Animation series(0);
         series.retarget(4, 0, zoom);
@@ -44,7 +61,7 @@ int main() {
             check(close(series.sample(time).scale, before.scale));
             previousScale = before.scale;
         }
-        check(close(series.sample(.4).scale, .92));
+        check(close(series.sample(.33).scale, .92));
         check(close(series.sample(.601).scale, 1));
         check(!series.sample(.601).active);
     }
@@ -52,6 +69,7 @@ int main() {
     noZoom.zoomOutPercent = 0;
     Animation flat(1);
     flat.retarget(2, 0, noZoom);
+    check(flat.sample(.01).position > 1);
     check(flat.sample(.2).active && close(flat.sample(.2).scale, 1));
     check(close(flat.sample(.2).position, 1.875));
 
