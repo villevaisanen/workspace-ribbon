@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(workspace-ribbon VERSION 0.2.0 LANGUAGES CXX)
+project(workspace-ribbon VERSION 0.2.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(RIBBON_BUILD_PLUGIN "Build native Hyprland plugin" ON)

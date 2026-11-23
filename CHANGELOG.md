@@ -1,11 +1,14 @@
 # Changelog
 
+## 0.2.1 — Development
+
+- Support Omarchy workspace layouts and ordinary floating windows during Ribbon slides, preserving native stacking and the pinned-window fallback.
+
 ## 0.2.0 — Development
 
 - Integrated the existing Omarchy layer-shell settings panel and live settings helper.
 - Added session-only native build and activation, ABI checks, versioned user artifacts and opt-in login loading.
 - Existing compatible native builds keep serving the panel without another load.
-- Support Omarchy workspace layouts and ordinary floating windows during Ribbon slides, preserving native stacking and the pinned-window fallback.
 
 ## 0.1.1 — Development snapshot
 

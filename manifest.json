@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "villevaisanen.workspace-ribbon",
   "name": "Workspace Ribbon",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "villevaisanen",
   "description": "Build and configure the Workspace Ribbon animation plugin for Hyprland.",
   "kinds": [

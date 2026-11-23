@@ -2,7 +2,7 @@
 
 Continuous horizontal workspace animation and an Omarchy settings panel in one project.
 
-Development version **0.2.0** on `dev`. The native plugin targets Hyprland 0.56.2.
+Development version **0.2.1** on `dev`. The native plugin targets Hyprland 0.56.2.
 See [architecture](docs/architecture.md), [compatibility](docs/compatibility.md),
 and [test report](docs/testing.md). Licensed GPL-3.0-only.
 
@@ -243,8 +243,8 @@ Use the normal Omarchy login/session process; no compositor restart is automated
 
 ## Development
 
-`dev` carries 0.2.0 locally. `v0.1.1` remains the previous development
-snapshot. The `main` branch is reserved for stable work.
+`v0.2.1` marks the current development snapshot on `dev`. The `main` branch
+is reserved for stable work.
 Run model-only checks without compositor headers using
 `cmake -S . -B build-model -DRIBBON_BUILD_PLUGIN=OFF` then build and ctest.
 Run the panel helper's isolated tests with `python tests/settings.py`.
