@@ -211,7 +211,10 @@ void installTextureHook(HANDLE handle) {
 
 SP<Int> registerOption(HANDLE handle, const char* name, const char* description, int value, int min, int max) {
     auto result=makeShared<Int>(name,description,value,Config::Values::SIntValueOptions{.min=min,.max=max});
-    if (!HyprlandAPI::addConfigValueV2(handle,result)) throw std::runtime_error("workspace-ribbon: option registration failed");
+    if (!HyprlandAPI::addConfigValueV2(handle, result)) {
+        throw std::runtime_error(std::string{"workspace-ribbon: could not register "} + name +
+                                 ". Check whether another Workspace Ribbon build is already loaded.");
+    }
     return result;
 }
 }

@@ -56,6 +56,14 @@ If you later choose persistence, Lua supports
 `hl.plugin.load("/absolute/path/to/libworkspace-ribbon.so")`; remove that line to
 disable persistent loading. This project does not edit your config.
 
+Use one loading method and one build path per session. If a Lua load is already
+configured, replace its existing path with the new build's absolute path and
+run `hyprctl reload`. Hyprland 0.56.2 unloads the previously configured path
+before loading the new one. A manual load from a different path while the
+plugin is active fails because both copies register the same option names.
+After switching to a zoom build, confirm that
+`hyprctl getoption plugin:workspace_ribbon:zoom_out_percent` returns an integer.
+
 A valid `hyprpm.toml` is supplied. If a compatible hyprpm is available, upstream
 0.56.2 supports a git revision after the URL:
 
