@@ -9,7 +9,7 @@ installed headers, but the compositor ABI string uses matching minor versions.
 Initialization checks the complete Hyprland ABI string and refuses mismatches.
 That guard reduces risk; it cannot prove internal ABI compatibility.
 
-Only compilation and independent model tests have passed. No version is runtime
+Compilation and model tests have passed, along with single-output nested Hyprland tests for tiled, scrolling and floating workspaces. No version is runtime
 certified. No commit pins are advertised. Rebuild after compositor updates and
 review upstream changes before loading. CMake rejects other release versions.
 
@@ -19,7 +19,9 @@ review upstream changes before loading. CMake rejects other release versions.
 | Absent intermediate IDs | Empty desktop, no workspace creation |
 | Existing ID on another monitor along path | Native fallback |
 | Fullscreen anywhere on target monitor | Native fallback |
-| Mapped floating/pinned window on target monitor | Native fallback |
+| Ordinary floating windows, including Omarchy floating mode | Native floating-window pass with Ribbon translation and zoom |
+| Floating window extending across its output, applying an offscreen transformer, or dimming the output | Native fallback for paths that can show the affected window |
+| Mapped pinned window on target monitor | Native fallback |
 | Named or special workspace | Native fallback |
 | Super+number, next/previous, wheel | Existing workspace event, no rebind |
 | Swipe gestures | Not integrated; native gesture offsets may conflict; do not combine yet |
@@ -29,7 +31,7 @@ review upstream changes before loading. CMake rejects other release versions.
 | Other plugins modifying workspace offsets/force flags | Unsupported combination |
 | Direct scanout, VRR, screen capture, lockscreen | Runtime validation pending |
 
-Ordinary tiled surfaces retain native rendering, decoration, blur and monitor
+Ordinary tiled and floating surfaces retain native rendering, decoration, blur and monitor
 clipping. Per-workspace seam clipping remains incomplete for shadows/popups.
 Do not describe this prototype as a finished replacement for all native animations.
 Numeric gaps belonging to disconnected monitors or only configured by rules cannot

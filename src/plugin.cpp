@@ -22,6 +22,11 @@ HANDLE pluginHandle = nullptr;
 CFunctionHook* textureHook = nullptr;
 bool zoomHintQueued = false;
 std::vector<CHyprSignalListener> listeners;
+struct FloatingDrawOffset {
+    PHLWINDOWREF window;
+    Vector2D offset;
+};
+std::vector<FloatingDrawOffset> floatingDrawOffsets;
 double now() { return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
 struct MonitorAnimation {
     PHLMONITORREF monitor;
@@ -56,8 +61,34 @@ bool eligible(PHLMONITOR monitor, double origin, WORKSPACEID destination, double
         if (scale < 1. && ws->m_monitor == monitor && ws->m_isSpecialWorkspace && ws->m_alpha->value() > 0.F) return false;
         if (ws->m_monitor == monitor && ws->m_id > 0 && Fullscreen::controller()->hasFullscreen(ws.lock())) return false;
     }
-    for (const auto& w : Desktop::windowState()->windows())
-        if (w->m_monitor == monitor && w->m_isMapped && (w->m_isFloating || w->m_pinned)) return false;
+    for (const auto& window : Desktop::windowState()->windows()) {
+        if (window->m_monitor != monitor || !window->m_isMapped) continue;
+        // Pinned windows must keep following the monitor rather than a cell.
+        if (window->m_pinned) return false;
+        if (!window->m_isFloating || window->isHidden()) continue;
+        const auto workspace = window->m_workspace;
+        if (!valid(workspace) || workspace->m_monitor != monitor || workspace->m_id <= 0) continue;
+
+        const auto box = window->geometricBox(Desktop::View::IGeometric::GEOMETRIC_CURRENT);
+        const auto local = box.pos() - monitor->m_position;
+        const bool crossesCell = local.x < 0 || local.y < 0 ||
+            local.x + box.w > monitor->m_size.x || local.y + box.h > monitor->m_size.y;
+        const bool dimsOutput = window->m_ruleApplicator->dimAround().valueOrDefault();
+        if (!crossesCell && !dimsOutput && window->m_transformers.empty()) continue;
+
+        // Float spill, output-wide dimming and offscreen window transformers
+        // are not isolated per cell by the native pass. Only block a path
+        // where that footprint can enter the zoom-expanded viewport.
+        const auto footprint = window->getFullWindowBoundingBox();
+        const auto position = footprint.pos() - monitor->m_position;
+        const double center = double(workspace->m_id) - 1.5;
+        const double left = center + position.x / monitor->m_size.x;
+        const double right = left + footprint.w / monitor->m_size.x;
+        const double verticalMargin = monitor->m_size.y * (.5 / scale - .5);
+        if (position.y + footprint.h > -verticalMargin && position.y < monitor->m_size.y + verticalMargin &&
+            ribbon::intersectsSweep(left, right, origin, double(destination) - 1, scale))
+            return false;
+    }
     return true;
 }
 void apply(MonitorAnimation& state, double time) {
@@ -113,9 +144,32 @@ Vector2D zoomTranslation(PHLMONITOR monitor, float scale) {
     return monitor->m_transformedSize * ((1. - scale) / 2.);
 }
 
+void suppressFloatingDrawOffsets(PHLMONITOR monitor) {
+    for (const auto& window : Desktop::windowState()->windows()) {
+        const auto workspace = window->m_workspace;
+        if (!window->m_isMapped || !window->m_isFloating || window->m_pinned ||
+            window->m_monitor != monitor || !workspace || workspace->m_monitor != monitor ||
+            workspace->m_id <= 0 || (!workspace->m_forceRendering && workspace != monitor->m_activeWorkspace) ||
+            window->m_floatingOffset == Vector2D{})
+            continue;
+        floatingDrawOffsets.push_back({window, window->m_floatingOffset});
+        // Hyprland's workspace update callback pushes floating borders that
+        // overhang the monitor. A ribbon cell needs one rigid translation.
+        // Keep the correction out of surfaces and decorations for this draw.
+        window->m_floatingOffset = {};
+    }
+}
+
+void restoreFloatingDrawOffsets() {
+    for (const auto& saved : floatingDrawOffsets)
+        if (auto window = saved.window.lock()) window->m_floatingOffset = saved.offset;
+    floatingDrawOffsets.clear();
+}
+
 void renderStage(eRenderStage stage) {
     auto& renderer = *g_pHyprRenderer;
     if (stage == RENDER_POST) {
+        restoreFloatingDrawOffsets();
         // The main pass can outlive the plugin, so remove its plugin-owned element.
         if (zoomHintQueued) {
             renderer.m_renderPass.removeAllOfType(RibbonZoomHint::NAME);
@@ -135,7 +189,9 @@ void renderStage(eRenderStage stage) {
     if (zoomHintQueued) return;
 
     const auto it = monitors.find(monitor->m_id);
-    if (it == monitors.end() || !it->second.running || it->second.scale == 1.F) return;
+    if (it == monitors.end() || !it->second.running) return;
+    suppressFloatingDrawOffsets(monitor);
+    if (it->second.scale == 1.F) return;
 
     const float scale = it->second.scale;
     RenderMods mods;
@@ -252,6 +308,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
 }
 APICALL EXPORT void PLUGIN_EXIT() {
     listeners.clear();
+    restoreFloatingDrawOffsets();
     for(auto& [id,state]:monitors) finish(state);
     monitors.clear();
     if (zoomHintQueued) g_pHyprRenderer->m_renderPass.removeAllOfType(RibbonZoomHint::NAME);

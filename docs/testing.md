@@ -1,5 +1,34 @@
 # Workspace Ribbon test report
 
+## 0.2.0 floating and scrolling workspace rendering
+
+The Release build against Hyprland 0.56.2, CTest and the three settings helper
+tests passed. The C++ visibility tests cover a remote floating footprint,
+forward and reverse sweeps, an intermediate cell, and a narrow footprint that
+enters the viewport only when zoomed out.
+
+The native binary was loaded in a separate real Hyprland 0.56.2 session with one
+output, using the installed Omarchy 4.5 workspace modes and titlebar plugin.
+The session used 900 ms linear motion, 12% zoom and colored Wayland terminals.
+In-flight captures and Hyprland's client geometry showed:
+
+- **1 → 2:** both dwindle workspaces appeared in the same Ribbon frame, with
+  workspace 8 in floating mode first empty and then occupied.
+- **2 → 8 and 8 → 2:** both overlapping floating clients moved with their cell.
+  The captured rectangles shifted horizontally and shrank with zoom. One
+  floated client sat 3 logical pixels from the monitor's left edge.
+- **8 → 2 → 8, interrupted:** both clients remained visible in the reversal.
+  Their settled geometry and the front client at an overlap point matched the
+  pre-transition values.
+- **2 → 9:** both clients of intermediate floating workspace 8 appeared.
+- **3 → 2:** the scrolling-layout workspace and the tiled workspace were
+  visible together. A separate **1 → 2** capture included an individually
+  floated window and a tiled window on workspace 2.
+
+The user's running compositor kept its previous binary. Pinned windows retain
+the existing fallback. Multi-monitor behavior and decoration seam clipping
+were outside this run.
+
 ## 0.2.0 development integration
 
 - Release CMake build with the installed Hyprland 0.56.2 headers and CTest passed.

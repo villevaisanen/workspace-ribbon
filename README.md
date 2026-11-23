@@ -6,9 +6,10 @@ Development version **0.2.0** on `dev`. The native plugin targets Hyprland 0.56.
 See [architecture](docs/architecture.md), [compatibility](docs/compatibility.md),
 and [test report](docs/testing.md). Licensed GPL-3.0-only.
 
-This prototype renders intermediate **tiled** workspaces using one time-based
-viewport coordinate. It does not chain workspace dispatches. Fullscreen, floating,
-special and foreign-monitor paths fall back to native behavior. Popup/shadow seam
+This prototype renders intermediate workspaces with tiled and ordinary floating windows using one time-based
+viewport coordinate. It does not chain workspace dispatches. Fullscreen, pinned, special and
+foreign-monitor paths fall back to native behavior. Floating windows that
+cannot be isolated within a cell use native behavior only on affected paths. Popup/shadow seam
 clipping is incomplete. The zoom prototype has been loaded on Omarchy with
 Hyprland 0.56.2. Full graphical validation is pending.
 

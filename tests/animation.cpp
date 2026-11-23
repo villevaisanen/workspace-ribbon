@@ -79,5 +79,14 @@ int main() {
     check(visible(edge - .000001, 0, .92));
     check(!visible(edge + .000001, 0, .92));
     check(visible(-edge + .000001, 0, .92));
+    // An unsupported float in cell 8 must not suppress 1 -> 2.
+    check(!intersectsSweep(6.8, 7.3, 0., 1., .88));
+    check(intersectsSweep(6.8, 7.3, 1., 7., .88));
+    check(intersectsSweep(6.8, 7.3, 7., 1., .88));
+    check(intersectsSweep(6.8, 7.3, 1., 8., .88));
+    // The expanded camera sees a narrow footprint beyond a unit-scale edge.
+    check(!intersectsSweep(1.53, 1.7, 0., 1., 1.));
+    check(intersectsSweep(1.53, 1.7, 1., 0., .88));
+    check(!intersectsSweep(1.5, 1.7, 0., 1., 1.));
     std::cout << "animation model checks passed\n";
 }

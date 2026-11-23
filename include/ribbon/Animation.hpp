@@ -62,6 +62,12 @@ public:
     }
 };
 inline double visibleRadius(double scale) { return .5 + .5 / scale; }
+// Coordinates are relative to the ribbon, in workspace widths. A bounding
+// interval can be wider than its cell, e.g. for a window crossing a seam.
+inline bool intersectsSweep(double left, double right, double from, double to, double scale) {
+    const double halfWidth = .5 / scale;
+    return right > std::min(from, to) - halfWidth && left < std::max(from, to) + halfWidth;
+}
 inline bool visible(double coordinate, double position, double scale = 1.) {
     return std::abs(coordinate - position) < visibleRadius(scale);
 }
