@@ -2,14 +2,15 @@
 
 Native Hyprland continuous horizontal workspace animation prototype for Omarchy.
 
-Development version: **0.1.0-dev**. Experimental; runtime validation pending.
+Development version **0.1.1**.
 See [architecture](docs/architecture.md), [compatibility](docs/compatibility.md),
 and [test report](docs/testing.md). Licensed GPL-3.0-only.
 
 This prototype renders intermediate **tiled** workspaces using one time-based
 viewport coordinate. It does not chain workspace dispatches. Fullscreen, floating,
 special and foreign-monitor paths fall back to native behavior. Popup/shadow seam
-clipping is incomplete. It has **not been loaded or visually tested**.
+clipping is incomplete. The zoom prototype has been loaded on Omarchy with
+Hyprland 0.56.2. Full graphical validation is pending.
 
 ## Build on Omarchy
 
@@ -133,9 +134,8 @@ Use the normal Omarchy login/session process; no compositor restart is automated
 
 ## Development
 
-`dev` contains 0.1.0-dev. `main` is reserved for stable work; no experimental plugin
-code is merged there. Stable releases will use annotated `vMAJOR.MINOR.PATCH` tags
-after runtime acceptance. No stable release or tag exists yet.
+`v0.1.1` marks the development snapshot on `dev`. The `main` branch is reserved
+for stable work. Stable releases require runtime acceptance.
 Run model-only checks without compositor headers using
 `cmake -S . -B build-model -DRIBBON_BUILD_PLUGIN=OFF` then build and ctest.
 See [test report](docs/testing.md) for the remaining acceptance matrix.

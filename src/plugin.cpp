@@ -248,7 +248,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
     listeners.push_back(Event::bus()->m_events.config.reloaded.listen([]() {
         for(auto& [id,state]:monitors) finish(state);
     }));
-    return {"workspace-ribbon", "Continuous workspace ribbon prototype", "villevaisanen", "0.1.0-dev"};
+    return {"workspace-ribbon", "Continuous workspace ribbon prototype", "villevaisanen", WORKSPACE_RIBBON_VERSION};
 }
 APICALL EXPORT void PLUGIN_EXIT() {
     listeners.clear();
