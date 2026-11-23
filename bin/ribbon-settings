@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+"""Read, apply and save Workspace Ribbon settings on Hyprland Lua sessions."""
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+import ribbon_native as native
+from ribbon_native import SettingsError
+
+PREFIX = "plugin:workspace_ribbon:"
+# Minimum, maximum and upstream default (Workspace Ribbon v0.1.1).
+OPTIONS = {
+    "enabled": (0, 1, 1),
+    "zoom_out_percent": (0, 25, 8),
+    "duration_ms": (1, 10000, 400),
+    "easing": (0, 2, 1),
+    "scale_distance": (0, 1, 0),
+    "max_duration_ms": (1, 10000, 1200),
+}
+
+
+def hyprctl(*args):
+    try:
+        result = subprocess.run(
+            ["hyprctl", *args], capture_output=True, text=True, timeout=3
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise SettingsError(f"Cannot reach Hyprland: {exc}", "unavailable") from exc
+    stdout = result.stdout.strip()
+    stderr = result.stderr.strip()
+    # Some hyprctl socket failures are printed even with exit status 0.
+    connection_errors = ("Couldn't connect", "HYPRLAND_INSTANCE_SIGNATURE not set")
+    if result.returncode != 0 or stdout.startswith(connection_errors) or stderr.startswith(connection_errors):
+        reason = (stderr or stdout)[:350]
+        raise SettingsError(f"Cannot reach Hyprland: {reason}", "unavailable")
+    return stdout
+
+
+def read_active():
+    requests = ";".join("getoption " + PREFIX + name for name in OPTIONS)
+    response = hyprctl("-j", "--batch", requests)
+    if any(line.strip() == "no such option" for line in response.splitlines()):
+        if not native.active_plugin(hyprctl):
+            raise SettingsError("Workspace Ribbon is not loaded in this session.", "not_loaded")
+        raise SettingsError("The loaded Workspace Ribbon is missing required options. Use version 0.1.1 or a compatible build.", "incompatible")
+
+    decoder = json.JSONDecoder()
+    values = {}
+    try:
+        while response:
+            item, end = decoder.raw_decode(response)
+            response = response[end:].lstrip()
+            option = item["option"]
+            if not option.startswith(PREFIX):
+                raise ValueError("unexpected namespace")
+            name = option[len(PREFIX):]
+            value = item["int"]
+            if name in values or type(value) is not int:
+                raise ValueError("expected a unique integer setting")
+            low, high, _ = OPTIONS[name]
+            if not low <= value <= high:
+                raise ValueError(f"{name} is outside {low}–{high}")
+            values[name] = value
+        if values.keys() != OPTIONS.keys():
+            raise ValueError("incomplete reply")
+    except (ValueError, KeyError, TypeError, AttributeError) as exc:
+        raise SettingsError(f"Unexpected settings reply from Hyprland: {exc}") from exc
+    return values
+
+
+def set_option(name, raw):
+    low, high, _ = OPTIONS[name]
+    if not re.fullmatch(r"[0-9]{1,5}", raw) or not low <= int(raw) <= high:
+        raise SettingsError(f"{name} must be an integer from {low} to {high}.")
+    value = int(raw)
+    # The key is an allowlisted literal and the value is a validated integer.
+    read_active()
+    reply = hyprctl("eval", "hl.config({plugin={workspace_ribbon={%s=%d}}})" % (name, value))
+    if reply != "ok":
+        raise SettingsError(f"Hyprland rejected {name}: {reply[:350]}")
+    active = read_active()
+    if active[name] != value:
+        raise SettingsError(f"Hyprland reports {name} = {active[name]} after requesting {value}.")
+    return active
+
+
+def settings_path():
+    return native.config_dir() / "workspace-ribbon.lua"
+
+
+def lua_settings(values):
+    entries = "".join(f"      {name} = {values[name]},\n" for name in OPTIONS)
+    return (
+        "-- Managed by Workspace Ribbon Settings.\n"
+        "hl.config({\n  plugin = {\n    workspace_ribbon = {\n"
+        + entries
+        + "    },\n  },\n})\n"
+    )
+
+
+def is_saved(path, values):
+    try:
+        with path.open("rb") as handle:
+            expected = lua_settings(values).encode()
+            return handle.read(len(expected) + 1) == expected
+    except OSError:
+        return False
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    actions = parser.add_subparsers(dest="action", required=True)
+    actions.add_parser("get", help="show all active values and whether they match disk")
+    write = actions.add_parser("set", help="apply one value and verify it by reading back")
+    write.add_argument("name", choices=OPTIONS)
+    write.add_argument("value")
+    save = actions.add_parser("save", help="save the verified live values atomically")
+    save.add_argument("--expect", help="require an exact match with this JSON settings object")
+    build = actions.add_parser("build", help="build, install and enable the native plugin")
+    build.add_argument("--prepare", action="store_true", help="build and install only, even if another version is active")
+    login = actions.add_parser("login", help="manage the opt-in native autostart entry")
+    login.add_argument("enabled", choices=("on", "off"))
+    actions.add_parser("unload", help="unload a native plugin activated by this helper")
+    args = parser.parse_args()
+
+    try:
+        installed = None
+        if args.action == "build":
+            installed, values = native.build_and_enable(hyprctl, read_active, args.prepare)
+            if args.prepare:
+                print(json.dumps({"ok": True, "artifact": str(installed)}))
+                return 0
+        elif args.action == "set":
+            values = set_option(args.name, args.value)
+        elif args.action == "unload":
+            native.unload_owned(hyprctl)
+            print(json.dumps({"ok": True}))
+            return 0
+        elif args.action == "login":
+            native.set_login(hyprctl, args.enabled == "on")
+            try:
+                values = read_active()
+            except SettingsError as exc:
+                if args.enabled != "off" or exc.code != "not_loaded":
+                    raise
+                values = None
+        else:
+            values = read_active()
+        path = settings_path()
+        if args.action == "save":
+            if args.expect is not None:
+                expected = json.loads(args.expect)
+                if (not isinstance(expected, dict)
+                    or any(type(value) is not int for value in expected.values())
+                    or expected != values):
+                    raise SettingsError("Live settings changed since they were displayed. Retry before saving.")
+            native.atomic_write(path, lua_settings(values).encode())
+        plugin = native.active_plugin(hyprctl)
+        try:
+            login_status, loader = native.login_status(plugin)
+        except (OSError, ValueError, SettingsError) as exc:
+            login_status, loader = "external", str(exc)
+        print(json.dumps({"ok": True, "values": values, "saved": values is not None and is_saved(path, values),
+                          "login": login_status, "loader": loader, "artifact": str(installed) if installed else None}))
+        return 0
+    except (SettingsError, ValueError, OSError, KeyError, TypeError) as exc:
+        print(json.dumps({"ok": False, "code": getattr(exc, "code", "error"), "message": str(exc)}))
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
