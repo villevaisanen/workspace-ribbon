@@ -1,4 +1,26 @@
-# Test report — 2026-11-09
+# Workspace Ribbon test report
+
+## 0.2.0 development integration
+
+- Release CMake build with the installed Hyprland 0.56.2 headers and CTest passed.
+- Manifest validation passed in a clean combined checkout. Omarchy's validator
+  rejects the pre-existing symlinks in the development checkout's ignored
+  `.tools/` environment, which is excluded from the clean package.
+- `qmlformat`, `qmllint` with Omarchy's modules, and the three isolated
+  `tests/settings.py` tests passed. They cover live values, bounds, invalid
+  inputs, atomic persistence and missing or competing native loaders.
+- In the existing Omarchy session the combined panel opened from `/tmp` after
+  temporarily repointing the single plugin symlink. It displayed the active
+  six values, saved state and existing Lua loader. The native plugin handle
+  stayed the same. The original panel link was restored after the check.
+- In a separate nested Hyprland with temporary XDG paths, the helper detected
+  the missing native plugin, built and installed 0.2.0, enabled it and verified
+  the options. Duplicate loads were rejected. Live edits, Save, managed login
+  opt-in/out and unloading were exercised only inside that nested session.
+- The first-use button was checked through QML validation and its helper in
+  nested Hyprland. No physical login cycle or hyprpm install was exercised.
+
+## Initial report — 2026-11-09
 
 ## Verified locally
 

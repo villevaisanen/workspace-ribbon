@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 — Development
+
+- Integrated the existing Omarchy layer-shell settings panel and live settings helper.
+- Added session-only native build and activation, ABI checks, versioned user artifacts and opt-in login loading.
+- Existing compatible native builds keep serving the panel without another load.
+
 ## 0.1.1 — Development snapshot
 
 - Added configurable center zoom during workspace slides, with a short zoom lead on fresh transitions and immediate motion on retargeting.
