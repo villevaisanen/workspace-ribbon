@@ -20,7 +20,13 @@ but cannot replace compositor rendering. No shell component is needed here.
 Native plugin events observe workspace changes after native animations are started.
 There is no public event that replaces the workspace renderer or supplies a ribbon
 coordinate. Public event registration is used; internal workspace fields supply
-render access. No function trampolines or private/public preprocessor overrides.
+render access. The original slide uses event listeners without function hooks. Zoom brackets
+the window pass with native renderer hints, keeping shell layers and cursor
+outside the transform. One version-specific OpenGL texture draw hook moves
+texture geometry and clipping into output coordinates before damage is
+computed. Animation frames with zoom bypass untransformed occlusion
+simplification. If the texture hook cannot be installed, the slide runs without
+zoom. See [Hyprland renderer hints](https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/render/pass/RendererHintsPassElement.hpp).
 
 ## Rendering strategy
 
@@ -47,6 +53,8 @@ pinned windows, and their clipping also have animation-specific logic. Any mappe
 floating or fullscreen window on the monitor causes native fallback. Special and
 named workspaces use native behavior. Cross-monitor IDs are not adjacency: if an
 existing foreign workspace lies in the traversed interval, use native fallback.
+For zoom, the ownership check also covers workspaces that could appear at the
+widened viewport edges along the path.
 
 Tiled surfaces use Hyprland's existing monitor clipping. Independent per-cell clips
 are not implemented: shadows, decorations and popups can spill across cell seams.

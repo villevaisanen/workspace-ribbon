@@ -2,6 +2,8 @@
 
 ## 0.1.0-dev — Unreleased
 
+- Added configurable center zoom during workspace slides, with continuous zoom on retargeting.
+
 - Investigated Omarchy 4.0.6 and Hyprland 0.56.2 rendering architecture.
 - Added CMake native plugin target and hyprpm manifest without speculative pins.
 - Added steady-clock cubic, linear and spring interpolation with interruption support.

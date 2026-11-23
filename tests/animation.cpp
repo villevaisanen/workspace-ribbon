@@ -22,5 +22,44 @@ int main() {
     Animation scaled; scaled.retarget(10,0,o); check(scaled.sample(.799).active); check(!scaled.sample(.8).active);
     Animation other(8); check(close(other.sample(.2).position,8));
     check(visible(2,1.5)&&visible(1,1.5)&&!visible(3,1.5));
+    for (const auto ease : {Easing::Linear, Easing::EaseOut, Easing::Spring}) {
+        Options zoom;
+        zoom.easing = ease;
+        Animation single(1);
+        single.retarget(2, 0, zoom);
+        check(close(single.sample(0).scale, 1));
+        check(close(single.sample(.1).scale, .96));
+        check(close(single.sample(.2).scale, .92));
+        check(close(single.sample(.3).scale, .96));
+        check(close(single.sample(.4).scale, 1));
+
+        Animation series(0);
+        series.retarget(4, 0, zoom);
+        double previousScale = series.sample(0).scale;
+        for (const double time : {.05, .10, .15, .20}) {
+            const auto before = series.sample(time);
+            check(before.scale <= previousScale && before.scale >= .92);
+            series.retarget(time == .20 ? 1 : (time == .10 ? 3 : 4), time, zoom);
+            check(close(series.sample(time).position, before.position));
+            check(close(series.sample(time).scale, before.scale));
+            previousScale = before.scale;
+        }
+        check(close(series.sample(.4).scale, .92));
+        check(close(series.sample(.601).scale, 1));
+        check(!series.sample(.601).active);
+    }
+    Options noZoom;
+    noZoom.zoomOutPercent = 0;
+    Animation flat(1);
+    flat.retarget(2, 0, noZoom);
+    check(flat.sample(.2).active && close(flat.sample(.2).scale, 1));
+    check(close(flat.sample(.2).position, 1.875));
+
+    const double edge = visibleRadius(.92);
+    check(!visible(1, 0));
+    check(visible(1, 0, .92));
+    check(visible(edge - .000001, 0, .92));
+    check(!visible(edge + .000001, 0, .92));
+    check(visible(-edge + .000001, 0, .92));
     std::cout << "animation model checks passed\n";
 }

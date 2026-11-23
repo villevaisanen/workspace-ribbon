@@ -84,6 +84,7 @@ hl.config({
       max_duration_ms = 1200,
       scale_distance = 0,
       easing = 1,
+      zoom_out_percent = 8,
     },
   },
 })
@@ -96,6 +97,13 @@ hl.config({
 | max_duration_ms | 1200 | Duration cap, range 1–10000 ms |
 | scale_distance | 0 | 1 multiplies duration by distance, minimum multiplier 1 |
 | easing | 1 | 0 linear, 1 cubic ease-out, 2 critically damped spring |
+| zoom_out_percent | 8 | Maximum zoom out, 0–25. At 8 the window ribbon reaches 92% scale. Set 0 for the original slide. |
+
+The ribbon scales around the output center, reaches its minimum halfway through
+a single slide, and returns to full size at the end. A new target starts from
+the current scale. Layer-shell bars, wallpaper and the cursor keep their size.
+Zoom uses an internal OpenGL texture draw hook for clipping. If that hook is
+unavailable, the original ribbon slide is used.
 
 Spring dynamics use an analytic response with a fixed damping relationship; there
 are no separate stiffness/damping controls yet. Ease-out interruptions preserve
